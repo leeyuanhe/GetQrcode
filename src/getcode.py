@@ -31,24 +31,25 @@ def collect_fastest_ip():
         # options.add_argument('--headless')
         # options.add_argument('--disable-gpu')
         driver = webdriver.Chrome(options=options)
-        driver.get("https://xxxxxx.ooo/")
+        driver.get("https://xxxx-xxs.ooo/")
         wait = WebDriverWait(driver, 20, 0.2)
         # 循环遍历tr
         tr_num = 1
         ip_list = []
         ip_map = {}
+        url_map = {}
         while tr_num < 36:
             ip = wait.until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="tb0a3e"]/tbody/tr[' + str(tr_num) + ']/td[2]'))).text
+                EC.presence_of_element_located((By.XPATH, '//*[@id="tb4b89"]/tbody/tr[' + str(tr_num) + ']/td[2]'))).text
             tr_num += 1
             print(ip)
-            out = subprocess.Popen(['ping', '-c', '3', ip], stdout=subprocess.PIPE)
+            out = subprocess.Popen(['ping', '-c', '5', ip], stdout=subprocess.PIPE)
             decode = out.stdout.read().decode()
             index = decode.index('/')
             print(decode[index + 1:index + 4] + ':' + decode[index + 26:index + 33])
             avg_time = float(decode[index + 26:index + 33])
             ip_list.append(avg_time)
-            get_png(wait, driver, ip_map, avg_time)
+            get_png(wait, driver, ip_map, avg_time,url_map)
     except TimeoutException:
         print('===超时警告')
         pass
@@ -61,7 +62,7 @@ def collect_fastest_ip():
         print('最慢的响应时间:' + str(max(ip_list)))
         print(ip_map.keys())
         # 将二维码发送给接收人
-        send_qrcode(receiver, ip_map[min(ip_list)])
+        send_qrcode(receiver, ip_map[min(ip_list)], url_map[min(ip_list)])
 
 
 
@@ -70,18 +71,20 @@ def collect_fastest_ip():
 """
 
 
-def get_png(wait, driver, ip_map, avg_time):
+def get_png(wait, driver, ip_map, avg_time,url_map):
     button = wait.until(
-        EC.presence_of_element_located((By.XPATH, '//*[@id="tb0a3e"]/tbody/tr[1]/td[8]/i')))
+        EC.presence_of_element_located((By.XPATH, '//*[@id="tb4b89"]/tbody/tr[1]/td[8]/i')))
     button.click()
     canvas = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="qrcode"]/canvas')))
     href_element = wait.until(EC.element_to_be_clickable((By.LINK_TEXT, 'URI')))
     print(href_element.get_attribute('href'))
+    ss_url = href_element.get_attribute('href')
     # get the canvas as a PNG base64 string
     canvas_base64 = driver.execute_script("return arguments[0].toDataURL('image/png').substring(21);", canvas)
     # decode
     canvas_png = base64.b64decode(canvas_base64)
     ip_map[avg_time] = canvas_png
+    url_map[avg_time] = ss_url
     button = wait.until(
         EC.presence_of_element_located((By.CLASS_NAME, 'layui-layer-shade')))
     driver.execute_script("arguments[0].click()", button)
@@ -92,17 +95,18 @@ def get_png(wait, driver, ip_map, avg_time):
 """
 
 
-def send_qrcode(receiver, object):
+def send_qrcode(receiver, png, url):
     with open(r"new.png", 'wb') as f:
-        f.write(object)
+        f.write(png)
         f.close()
     receiver.send_image('new.png')
+    receiver.send(url)
 
 
 if __name__ == '__main__':
     try:
         scheduler = BlockingScheduler()
-        scheduler.add_job(collect_fastest_ip, 'interval', seconds=300)
+        scheduler.add_job(collect_fastest_ip, 'interval', seconds=600)
         scheduler.start()
     except (KeyboardInterrupt, SystemExit, SystemError):
         print('===出错了')
