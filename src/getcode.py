@@ -48,11 +48,14 @@ def collect_fastest_ip():
             ip_map[ip]=tr_num
             tr_num += 1
         resultList = mping(orgip_list)
-        fastest_ip = resultList[0][0]
-        min_avg = str(resultList[0][1].avg)
-        print(fastest_ip+"======"+min_avg)
-        tr_num = ip_map[fastest_ip]
-        get_png(wait, driver, ip_map, min_avg,url_map,str(tr_num))
+        for tuplerow in range(3):
+            fastest_ip = resultList[tuplerow][0]
+            min_avg = str(resultList[tuplerow][1].avg)
+            print(fastest_ip+"======"+min_avg)
+            tr_num = ip_map[fastest_ip]
+            get_png(wait, driver, ip_map, min_avg, url_map,str(tr_num))
+            # 将二维码发送给接收人
+            send_qrcode(receiver, ip_map[min_avg], url_map[min_avg], min_avg)
     except TimeoutException:
         print('===超时警告')
         pass
@@ -61,9 +64,7 @@ def collect_fastest_ip():
         if len(orgip_list) == 0:
             print('未获取到页面元素')
             return
-        print("最快响应ip："+fastest_ip)
-        # 将二维码发送给接收人
-        send_qrcode(receiver, ip_map[min_avg], url_map[min_avg], min_avg)
+
 
 
 
@@ -109,7 +110,7 @@ def send_qrcode(receiver, png, url, avgTime):
 if __name__ == '__main__':
     try:
         scheduler = BlockingScheduler()
-        scheduler.add_job(collect_fastest_ip, 'interval', seconds=500)
+        scheduler.add_job(collect_fastest_ip, 'interval', seconds=600)
         scheduler.start()
     except (KeyboardInterrupt, SystemExit, SystemError):
         print('===出错了')
