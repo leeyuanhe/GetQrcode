@@ -26,8 +26,8 @@ def collect_fastest_ip():
         options.add_experimental_option('excludeSwitches',
                                         ['enable-automation'])
         options.add_argument('disable-infobars')
-        # options.add_argument('--headless')
-        # options.add_argument('--disable-gpu')
+        options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--ignore-ssl-errors')
         driver = webdriver.Chrome(options=options)
         driver.get("https://free-ss.site")
         wait = WebDriverWait(driver, 20, 0.2)
