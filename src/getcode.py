@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from wxpy import *
-
+from time import sleep
 # 初始化机器人，扫码登陆
 bot = Bot(console_qr=False, cache_path=True)
 dev_id = ''
@@ -30,6 +30,7 @@ def collect_fastest_ip():
         options.add_argument('--ignore-ssl-errors')
         driver = webdriver.Chrome(options=options)
         driver.get("https://free-ss.site")
+        sleep(20)
         wait = WebDriverWait(driver, 20, 0.2)
         # 循环遍历tr
         tr_num = 1
@@ -55,7 +56,7 @@ def collect_fastest_ip():
             tr_num = ip_map[fastest_ip]
             get_png(wait, driver, ip_map, min_avg, url_map,str(tr_num))
             # 将二维码发送给接收人
-            send_qrcode(receiver, ip_map[min_avg], url_map[min_avg], min_avg)
+            send_qrcode(receiver, ip_map[min_avg], url_map[min_avg], min_avg, tuplerow)
     except TimeoutException:
         print('===超时警告')
         pass
@@ -97,11 +98,11 @@ def get_png(wait, driver, ip_map, avg_time,url_map,tr_num):
 """
 
 
-def send_qrcode(receiver, png, url, avgTime):
+def send_qrcode(receiver, png, url, avgTime, index):
     with open(r"new.png", 'wb') as f:
         f.write(png)
         f.close()
-    receiver.send("此次最快响应时间:" + avgTime)
+    receiver.send("第"+str(index+1)+"名最快响应时间:" + avgTime)
     receiver.send_image('new.png')
     receiver.send(url)
     print("最快url===============>"+url)
@@ -110,7 +111,7 @@ def send_qrcode(receiver, png, url, avgTime):
 if __name__ == '__main__':
     try:
         scheduler = BlockingScheduler()
-        scheduler.add_job(collect_fastest_ip, 'interval', seconds=600)
+        scheduler.add_job(collect_fastest_ip, 'interval', seconds=20)
         scheduler.start()
     except (KeyboardInterrupt, SystemExit, SystemError):
         print('===出错了')
